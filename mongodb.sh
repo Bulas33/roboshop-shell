@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ID=$(id -u)
-
 R="\e[31m"
 G="\e[32m"
 Y="\e[33m"
@@ -14,11 +13,11 @@ LOGFILE="/tmp/$0-$TIMESTAMP.log"
 echo "script started excuting at $TIMESTAMP" &>> $LOGFILE
 
 VALIDATE (){
-    if [$1 -ne 0]
+    if  [ $1 -ne 0 ]
     then
-       echo -e "$2...$R FAILED $N"
+       echo -e "$2 ... $R FAILED $N"
     else
-     echo -e "$2...$G SUCCESS $N"
+       echo -e "$2 ... $G SUCCESS $N"
     
     fi
 }
@@ -34,9 +33,9 @@ else
 
    fi # fi means reverse if indicating condition end
 
-   cp mongo.repo /etc/yum.repos.d/mongo.repo/mongo.repo &>> $LOGFILE
+   cp mongo.repo /etc/yum.repos.d/mongo.repo &>> $LOGFILE
 
-   VALIDATE $? "copied MongoDB Repo"
+   VALIDATE $? "Copied MongoDB Repo"
 
    dnf install mongodb-org -y &>> $LOGFILE
 
@@ -48,7 +47,7 @@ else
 
    systemctl start mongod &>> $LOGFILE
 
-   VALIDATE $? "starting MongoDB"
+   VALIDATE $? "Starting MongoDB"
 
    sed -i 's/127.0.0.0/0.0.0.0/g'  /etc/mongod.conf  &>> $LOGFILE
 

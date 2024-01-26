@@ -52,4 +52,4 @@ else
 
    systemctl restart mongod &>> $LOGFILE
 
-   VALIDATE $?"Restarting MangoDB"
+   VALIDATE $? "Restarting MangoDB"

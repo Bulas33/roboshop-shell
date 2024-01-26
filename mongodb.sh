@@ -34,4 +34,8 @@ else
 
    fi # fi means reverse if indicating condition end
 
-   cp mongo.repo /etc/yum.repos.d/mongo.repo
+   cp mongo.repo /etc/yum.repos.d/mongo.repo/mongo.repo &>> $LOGFILE
+
+   VALIDATE $? "copied MongoDB Repo"
+
+ 

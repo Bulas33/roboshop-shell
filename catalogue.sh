@@ -5,6 +5,7 @@ R="\e[31m"
 G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
+MONGDB_HOST=mongodb.daws76s.online
 
 TIMESTAMP=$(date +%F-%H-%M-%S)
 LOGFILE="/tmp/$0-$TIMESTAMP.log"
@@ -29,27 +30,73 @@ else
     echo "You are root user"
 fi # fi means reverse of if, indicating condition end
 
-cp mongo.repo /etc/yum.repos.d/mongo.repo &>> $LOGFILE
+dnf module disable nodejs -y &>> $LOGFILE
 
-VALIDATE $? "Copied MongoDB Repo"
+VALIDATE $? "Disabling current NodeJS"
 
-dnf install mongodb-org -y &>> $LOGFILE
+dnf module enable nodejs:18 -y  &>> $LOGFILE
 
-VALIDATE $? "Installing MongoDB"
+VALIDATE $? "Enabling NodeJS:18"
 
-systemctl enable mongod &>> $LOGFILE
+dnf install nodejs -y  &>> $LOGFILE
 
-VALIDATE $? "Enabling MongoDB"
+VALIDATE $? "Installing NodeJS:18"
 
-systemctl start mongod &>> $LOGFILE
+id roboshop #if roboshop user does not exist, then it is failure
+if [ $? -ne 0 ]
+then
+    useradd roboshop
+    VALIDATE $? "roboshop user creation"
+else
+    echo -e "roboshop user already exist $Y SKIPPING $N"
+fi
 
-VALIDATE $? "Starting MongoDB"
+mkdir -p /app
 
-sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mongod.conf &>> $LOGFILE
+VALIDATE $? "creating app directory"
 
-VALIDATE $? "Remote access to MongoDB"
+curl -o /tmp/catalogue.zip https://roboshop-builds.s3.amazonaws.com/catalogue.zip  &>> $LOGFILE
 
-systemctl restart mongod &>> $LOGFILE
+VALIDATE $? "Downloading catalogue application"
 
-VALIDATE $? "Restarting MongoDB"
+cd /app 
+
+unzip -o /tmp/catalogue.zip  &>> $LOGFILE
+
+VALIDATE $? "unzipping catalogue"
+
+npm install  &>> $LOGFILE
+
+VALIDATE $? "Installing dependencies"
+
+# use absolute, because catalogue.service exists there
+cp /home/centos/roboshop-shell/catalogue.service /etc/systemd/system/catalogue.service &>> $LOGFILE
+
+VALIDATE $? "Copying catalogue service file"
+
+systemctl daemon-reload &>> $LOGFILE
+
+VALIDATE $? "catalogue daemon reload"
+
+systemctl enable catalogue &>> $LOGFILE
+
+VALIDATE $? "Enable catalogue"
+
+systemctl start catalogue &>> $LOGFILE
+
+VALIDATE $? "Starting catalogue"
+
+cp /home/centos/roboshop-shell/mongo.repo /etc/yum.repos.d/mongo.repo
+
+VALIDATE $? "copying mongodb repo"
+
+dnf install mongodb-org-shell -y &>> $LOGFILE
+
+VALIDATE $? "Installing MongoDB client"
+
+mongo --host $MONGDB_HOST </app/schema/catalogue.js &>> $LOGFILE
+
+VALIDATE $? "Loading catalouge data into MongoDB"
+
+
 
